@@ -1,6 +1,9 @@
+# ------------- IMPORTS ------------------
 import random
 from math import sin, cos
+# ----------------------------------------
 
+# ------------- FUNCTIONS ----------------
 def genSudoBinaryCode(n):
         n = int(n)
         intSquares = [2**i for i in range(-20,100) if 2**i < n]
@@ -16,12 +19,12 @@ def genSudoBinaryCode(n):
 
         return intSquares[::-1]
 
-def genNArraysOf(x,y):
+def genNArraysOf(x,y,u1):
     arrs = []
     for i in range(x):
         arr = []
         for j in range(y):
-            if random.uniform(0,1) > 0.5:
+            if random.uniform(0,1) > u1:
                 arr.append(1)
             else:
                 arr.append(0)
@@ -30,8 +33,7 @@ def genNArraysOf(x,y):
     return arrs
 
 def getValuesOfXandY(randVals, sudoBinaryCode): 
-    valuesOfX = []
-    valuesOfY = []
+    values = []
     for randVal in randVals:
         xs = []
         ys = []
@@ -47,10 +49,9 @@ def getValuesOfXandY(randVals, sudoBinaryCode):
             else:
                 ys.append(i*j)
 
-        valuesOfX.append(sum(xs))
-        valuesOfY.append(sum(ys))
+        values.append([randVal, sum(xs), sum(ys)])
         
-    return valuesOfX, valuesOfY
+    return values
 
 def f(x,y):
     return -(x * sin(x)**2 * cos(x)**3 + (y * sin(y)**2 * cos(y)**3))
@@ -71,32 +72,117 @@ def getPA(arr):
         pa.append(s)
     return pa
 
-def bestK(arr,k):
-    return sorted(arr)[:k]
+def bestK(arrOfArrs,k):
+    return sorted(arrOfArrs, key=lambda x: x[3])[:k]
 
-# TESTS
-# -----------------------------
-# 1. Generar Codificacion Pseudo Binaria
-# -----------------------------
-# print(genSudoBinaryCode(360))
-# -----------------------------
-# 2. Generar arreglo de 1's y 0's aleatorio si pasan cierto umbral
-# -----------------------------
-# a = genNArraysOf(5,60)
-# for arr in a:
-#     print(arr)
-# -----------------------------
-# 3. Obtener los valores de X y Y dados los arreglosd de 1's y 0's aleatorios y la codificacion
-# -----------------------------
-# print(getValuesOfXandY(genNArraysOf(5,60),genSudoBinaryCode(360)))
-# -----------------------------
-# xys = (getValuesOfXandY(genNArraysOf(5,60),genSudoBinaryCode(360)))
-# xs = xys[0]
-# ys = xys[1]
-# ps = [f(x,y) for x,y in zip(xs, ys)] 
-# print(getPofEach(ps))
-# print(getPA(getPofEach(ps)))
-# print(bestK(ps,3))
+def crossElements(e1,e2):
+    xe1 = e1[:15]+e2[15:30]+e1[30:45]+e2[45:60]
+    xe2 = e2[:15]+e1[15:30]+e2[30:45]+e1[45:60]
+    return xe1, xe2
+    
+def mutate(element,uM):
+    if random.uniform(0,1) > uM:
+        return [0 if i else 1 for i in element]
+    else:
+        return element
+
+# ----------------------------------------
+
+# Inputs ( Esto se va a cambiar de STDIN a lo que se reciba de un request HTTP)
+poblacion, numKdeElitismo, cantidadGeneraciones = [int(x) for x in input().split(' ')]
+umbral1, umbralX, umbralM = [float(x) for x in input().split(' ')]
+
+sudoBinCode = genSudoBinaryCode(360)
+# ----------------------------------------
+# ----------------------------------------
+# ----------FIRST GENERATION--------------
+# ----------------------------------------
+# ----------------------------------------
+# Generar los N arreglos de 1's y 0's y su valor de X y Y dado el umbral1
+firstGeneration = (
+        getValuesOfXandY(
+                genNArraysOf(poblacion,60,umbral1),
+                sudoBinCode
+        )
+    ) # Generar Valores de f(x,y) para cada uno de los arreglos de 1's y 0's
+for element in firstGeneration:
+    element.append(f(element[1],element[2]))
+# Agregar P(f(x,y)) y PA(f(x,y)) a cada Arreglo de 1's y 0's
+probabilidades = getPofEach([element[3] for element in firstGeneration])
+probabilidadesAcumuladas = getPA(probabilidades)
+
+for element, i in zip(firstGeneration, range(len(probabilidades))):
+    element.append(probabilidades[i])
+    element.append(probabilidadesAcumuladas[i])
+
+# ----------------------------------------
+# ----------------------------------------
+# ----------SUBSEQUENT GENERATIONs--------
+# ----------------------------------------
+# ----------------------------------------
+
+
+# Obtener los mejores K elementos de la primera Generacion
+bestOfGeneration = (bestK(firstGeneration, numKdeElitismo))
+bestOfGeneration = [element[0] for element in bestOfGeneration]
+
+# Pasar esos K elementos a a la siguiente generación y el resto (N-K) Cruzar si pasan Umbral o no Cruzar si no pasan y Muter si pasan
+previousGeneration = sorted(firstGeneration, key=lambda x: x[5])
+previousGeneration = [element[0] for element in previousGeneration]
+nextGeneration = bestOfGeneration
+
+while len(nextGeneration) < poblacion:
+    numeroAleatorio = random.uniform(0,1)
+    for element in previousGeneration:
+        if numeroAleatorio >= element[5]:
+            father = element
+        
+    numeroAleatorio = random.uniform(0,1)
+    for element in previousGeneration:
+        if numeroAleatorio >= element[5]:
+            mother = element
+     
+    if numeroAleatorio > umbralX: 
+        child1, child2 = crossElements(father,mother)
+    else:
+        child1, child2 = father, mother
+
+    nextGeneration.append(mutate(child1,umbralM))
+    nextGeneration.append(mutate(child2,umbralM))
+
+# Generar valor de X y Y dado el umbral1 de la siguiente generacion
+nextGeneration = (
+        getValuesOfXandY(
+                nextGeneration,
+                sudoBinCode
+        )
+    )
+# Generar Valores de f(x,y) para cada uno de los arreglos de 1's y 0's de siguiente generación
+for element in nextGeneration:
+    element.append(f(element[1],element[2]))
+
+# Agregar P(f(x,y)) y PA(f(x,y)) a cada Arreglo de 1's y 0's a siguiente generacion
+probabilidades = getPofEach([element[3] for element in nextGeneration])
+probabilidadesAcumuladas = getPA(probabilidades)
+
+for element, i in zip(nextGeneration, range(len(probabilidades))):
+    element.append(probabilidades[i])
+    element.append(probabilidadesAcumuladas[i])
+
+
+
+for element in nextGeneration:
+    print("Array: ", element[0])
+    print("X: ", element[1])
+    print("Y: ", element[2])
+    print("f(x,y)", element[3])
+    print("P(f(x,y)", element[4])
+    print("PA(f(x,y)", element[5])
+
+# print(bestK(firstGeneration, 3))
+
+for generacion in range(cantidadGeneraciones):
+    pass
 
 
 

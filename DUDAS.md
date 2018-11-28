@@ -1,0 +1,3 @@
+- Si se puede mutar on the file
+- La relación entre la cantidad de elitismo y población por si es par e impar
+- Si podemos usar la librería de node
