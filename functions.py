@@ -56,6 +56,9 @@ def getValuesOfXandY(randVals, sudoBinaryCode):
 def f(x,y):
     return -(x * sin(x)**2 * cos(x)**3 + (y * sin(y)**2 * cos(y)**3))
 
+def f(x,y):
+    return x + y
+
 def getPofEach(arr):
     arr = [abs(i) for i in arr]
     total = sum(arr)
@@ -95,7 +98,8 @@ umbral1, umbralX, umbralM = [float(x) for x in input().split(' ')]
 sudoBinCode = genSudoBinaryCode(360)
 # ----------------------------------------
 # ----------------------------------------
-# ----------FIRST GENERATION--------------
+# ----------------------------------------
+# -----------FIRST GENERATION-------------
 # ----------------------------------------
 # ----------------------------------------
 # Generar los N arreglos de 1's y 0's y su valor de X y Y dado el umbral1
@@ -104,7 +108,8 @@ firstGeneration = (
                 genNArraysOf(poblacion,60,umbral1),
                 sudoBinCode
         )
-    ) # Generar Valores de f(x,y) para cada uno de los arreglos de 1's y 0's
+    )
+# Generar Valores de f(x,y) para cada uno de los arreglos de 1's y 0's
 for element in firstGeneration:
     element.append(f(element[1],element[2]))
 # Agregar P(f(x,y)) y PA(f(x,y)) a cada Arreglo de 1's y 0's
@@ -117,73 +122,68 @@ for element, i in zip(firstGeneration, range(len(probabilidades))):
 
 # ----------------------------------------
 # ----------------------------------------
-# ----------SUBSEQUENT GENERATIONs--------
+# ----------------------------------------
+# ------SUBSEQUENT GENERATIONS------------
 # ----------------------------------------
 # ----------------------------------------
-
-
-# Obtener los mejores K elementos de la primera Generacion
-bestOfGeneration = (bestK(firstGeneration, numKdeElitismo))
-bestOfGeneration = [element[0] for element in bestOfGeneration]
-
-# Pasar esos K elementos a a la siguiente generación y el resto (N-K) Cruzar si pasan Umbral o no Cruzar si no pasan y Muter si pasan
 previousGeneration = sorted(firstGeneration, key=lambda x: x[5])
-previousGeneration = [element[0] for element in previousGeneration]
-nextGeneration = bestOfGeneration
-
-while len(nextGeneration) < poblacion:
-    numeroAleatorio = random.uniform(0,1)
-    for element in previousGeneration:
-        if numeroAleatorio >= element[5]:
-            father = element
-        
-    numeroAleatorio = random.uniform(0,1)
-    for element in previousGeneration:
-        if numeroAleatorio >= element[5]:
-            mother = element
-     
-    if numeroAleatorio > umbralX: 
-        child1, child2 = crossElements(father,mother)
-    else:
-        child1, child2 = father, mother
-
-    nextGeneration.append(mutate(child1,umbralM))
-    nextGeneration.append(mutate(child2,umbralM))
-
-# Generar valor de X y Y dado el umbral1 de la siguiente generacion
-nextGeneration = (
-        getValuesOfXandY(
-                nextGeneration,
-                sudoBinCode
-        )
-    )
-# Generar Valores de f(x,y) para cada uno de los arreglos de 1's y 0's de siguiente generación
-for element in nextGeneration:
-    element.append(f(element[1],element[2]))
-
-# Agregar P(f(x,y)) y PA(f(x,y)) a cada Arreglo de 1's y 0's a siguiente generacion
-probabilidades = getPofEach([element[3] for element in nextGeneration])
-probabilidadesAcumuladas = getPA(probabilidades)
-
-for element, i in zip(nextGeneration, range(len(probabilidades))):
-    element.append(probabilidades[i])
-    element.append(probabilidadesAcumuladas[i])
-
-
-
-for element in nextGeneration:
-    print("Array: ", element[0])
-    print("X: ", element[1])
-    print("Y: ", element[2])
-    print("f(x,y)", element[3])
-    print("P(f(x,y)", element[4])
-    print("PA(f(x,y)", element[5])
-
-# print(bestK(firstGeneration, 3))
-
+print(previousGeneration)
 for generacion in range(cantidadGeneraciones):
-    pass
+    # Obtener los mejores K elementos de la generacion anterior
+    bestOfPreviousGeneration = (bestK([element[0] for element in previousGeneration], numKdeElitismo))
+
+    # Pasar esos K elementos a a la siguiente generación y el resto (N-K) Cruzar si pasan Umbral o no Cruzar si no pasan y Mutar si pasan
+    nextGeneration = bestOfPreviousGeneration
+    while len(nextGeneration) < poblacion:
+        numeroAleatorio = random.uniform(0,1)
+        for element in previousGeneration:
+            if numeroAleatorio >= element[5]:
+                father = element[0]
+            
+        numeroAleatorio = random.uniform(0,1)
+        for element in previousGeneration:
+            if numeroAleatorio >= element[5]:
+                mother = element[0]
+         
+        if numeroAleatorio > umbralX: 
+            child1, child2 = crossElements(father,mother)
+        else:
+            child1, child2 = father, mother
+
+        nextGeneration.append(mutate(child1,umbralM))
+        nextGeneration.append(mutate(child2,umbralM))
+
+    # Generar valor de X y Y 
+    nextGeneration = (
+            getValuesOfXandY(
+                    nextGeneration,
+                    sudoBinCode
+            )
+        )
+    # Generar Valores de f(x,y) para cada uno de los arreglos de 1's y 0's de siguiente generación
+    for element in nextGeneration:
+        element.append(f(element[1],element[2]))
+
+    # Agregar P(f(x,y)) y PA(f(x,y)) a cada Arreglo de 1's y 0's a siguiente generacion
+    probabilidades = getPofEach([element[3] for element in nextGeneration])
+    probabilidadesAcumuladas = getPA(probabilidades)
+
+    for element, i in zip(nextGeneration, range(len(probabilidades))):
+        element.append(probabilidades[i])
+        element.append(probabilidadesAcumuladas[i])
+
+    previousGeneration = sorted(nextGeneration, key=lambda x: x[5])
 
 
-
-# Recordar en memoria a que arreglos de 1's y 0's apuntan las k mejores f(x,y)'s
+# print("-"*50)
+# print("f(x,y)s of firstGen")
+# for element in sorted(firstGeneration, key=lambda x: x[5]):
+#     print("f(x,y)", element[3])
+# print("-"*50)
+# print("f(x,y)s of lastGen")
+# for element in sorted(nextGeneration, key=lambda x: x[5]):
+#     print("f(x,y)", element[3])
+# print("-"*50)
+# print("LastGen Best X: ",sorted(nextGeneration, key=lambda x: x[5])[0][1])
+# print("LastGen Best Y: ",sorted(nextGeneration, key=lambda x: x[5])[0][2])
+# print("LastGen Best f(x,y): ",sorted(nextGeneration, key=lambda x: x[5])[-1][3])
