@@ -65,8 +65,8 @@ def getValuesOfXandY(randVals, sudoBinaryCode):
 def f(x,y):
     return -(x * sin(x)**2 * cos(x)**3 + (y * sin(y)**2 * cos(y)**3))
 
-def f(x,y):
-    return x + y
+# def f(x,y):
+#     return x + y
 
 def getPofEach(arr):
     arr = [abs(i) for i in arr]
@@ -109,6 +109,15 @@ poblacion, numKdeElitismo, cantidadGeneraciones = [int(x) for x in input().split
 umbral1, umbralX, umbralM = [float(x) for x in input().split(' ')]
 
 sudoBinCode = genSudoBinaryCode(358)
+print("Codificación Pseudo binaria: ")
+print(sudoBinCode)
+print("-"*50)
+print("Población: ",poblacion)
+print("K de Elitismo: ",numKdeElitismo)
+print("Numero de generaciones: ",cantidadGeneraciones)
+print("Umbral 1: ",umbral1)
+print("Umbral Cruzamiento: ",umbralX)
+print("Umbral Mutación: ",umbralM)
 # ----------------------------------------
 # ----------------------------------------
 # ----------------------------------------
@@ -212,7 +221,6 @@ for generacion in range(cantidadGeneraciones):
         element.append(probabilidadesAcumuladas[i])
 
     previousGeneration = nextGeneration
-    print("POST MUTATION")
     print("-"*50)
     print("-> GENERACION #", generacion+1)
     for element in nextGeneration:
